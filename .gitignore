@@ -1,0 +1,14 @@
+# .gitignore dosyası içeriği:
+
+# Python gereksiz dosyaları
+__pycache__/
+*.pyc
+
+# Veritabanı dosyaları (GitHub'a gitmesin)
+*.db
+kutuphane.db
+
+# Sanal ortam (varsa)
+venv/
+env/
+.env
