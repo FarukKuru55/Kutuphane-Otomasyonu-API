@@ -24,3 +24,13 @@ export const addKitap = async (kitapVerisi: any) => {
         throw error;
     }
 };
+
+export const kitapSil = async (id: number) => {
+    try { 
+        const response = await axios.delete(`${BASE_URL}/kitap/sil/${id}`);
+        return response.data;   
+    } catch (error) {
+        console.error("Kitap silinirken hata:", error);
+        throw error;
+    }
+};

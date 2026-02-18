@@ -15,6 +15,21 @@ export default function KitapListesi() {
     // Burada <Kitap[]> diyerek "Bana kitap listesi gelecek" diyoruz
     const [kitaplar, setKitaplar] = useState<Kitap[]>([]);
 
+     const kitapSil = async (id: number) => {
+    if (window.confirm("Bu kitabı silmek istediğine emin misin?")) {
+        try {
+                 await kitapSil(id);
+                 alert("Kitap silindi!"); // Başarılı mesajı
+            
+                  const yeniListe = await getKitaplar();
+                  setKitaplar(yeniListe); // Dosyanın içindeki setKitaplar'ı doğrudan kullanıyoruz
+             } catch (error: any) {
+                   const hataMesaji = error.response?.data?.error || "Silme işlemi başarısız!";
+                   alert("❌ DİKKAT: " + hataMesaji);
+            }
+        }
+    };
+
     useEffect(() => {
         async function veriCek() {
             const veri = await getKitaplar();
@@ -64,3 +79,4 @@ export default function KitapListesi() {
         </div>
     );
 }
+

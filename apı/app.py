@@ -118,13 +118,17 @@ def odunc_teslim():
         
     return jsonify({'message': 'Kitap teslim alındı.'}), 200
 
-@app.route('/kitap/sil', methods=['DELETE'])
-def kitap_sil():
-    id = request.json.get('kitap_id')
-    if db_calistir('SELECT * FROM odunc WHERE kitap_id=?', (id,)):
-        return jsonify({'error': 'Kitap ödünçte, silinemez!'}), 400
+@app.route('/kitap/sil/<int:id>', methods=['DELETE'])
+def kitap_sil(id):
+    # Kontrol: Bu kitap biri tarafından ödünç alınmış mı?
+    odunc_durumu = db_calistir('SELECT * FROM odunc WHERE kitap_id=?', (id,))
+    
+    if odunc_durumu: # Eğer liste boş değilse kitap ödünçtedir
+        return jsonify({'error': 'Bu kitap şu an birinde ödünçte, silemezsin!'}), 400
+    
+    # Eğer ödünçte değilse gönül rahatlığıyla sil
     db_calistir('DELETE FROM kitaplar WHERE id=?', (id,))
-    return jsonify({'message': 'Silindi'}), 200
+    return jsonify({'message': 'Kitap başarıyla kütüphaneden kaldırıldı'}), 200
 
 @app.route('/yazar/silme', methods=['DELETE'])
 def yazar_sil():
