@@ -35,13 +35,39 @@ def db_calistir(sorgu, parametreler=()):
         return None
     
 
-def init_db():
+def init_db(): 
     tablolar = [
-       "CREATE TABLE IF NOT EXISTS yazarlar (id INTEGER PRIMARY KEY AUTOINCREMENT, ad_soyad TEXT NOT NULL)",
-        "CREATE TABLE IF NOT EXISTS okuyucular (id INTEGER PRIMARY KEY AUTOINCREMENT, ad_soyad TEXT NOT NULL)",
-        "CREATE TABLE IF NOT EXISTS kitaplar (id INTEGER PRIMARY KEY AUTOINCREMENT, baslik TEXT NOT NULL, stok INTEGER DEFAULT 1, yazar_id INTEGER NOT NULL, FOREIGN KEY(yazar_id) REFERENCES yazarlar(id))",
-        "CREATE TABLE IF NOT EXISTS odunc (id INTEGER PRIMARY KEY AUTOINCREMENT, kitap_id INTEGER NOT NULL, okuyucu_id INTEGER NOT NULL, alis_tarihi TEXT DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY(kitap_id) REFERENCES kitaplar(id), FOREIGN KEY(okuyucu_id) REFERENCES okuyucular(id))"
+       """CREATE TABLE IF NOT EXISTS yazarlar (
+            id INTEGER PRIMARY KEY AUTOINCREMENT, 
+            ad_soyad VARCHAR(50) NOT NULL
+        )""",
+        
+       """CREATE TABLE IF NOT EXISTS okuyucular (
+            id INTEGER PRIMARY KEY AUTOINCREMENT, 
+            ad_soyad VARCHAR(50) NOT NULL
+        )""",
+        
+       """CREATE TABLE IF NOT EXISTS kitaplar (
+            id INTEGER PRIMARY KEY AUTOINCREMENT, 
+            baslik VARCHAR(100) NOT NULL, 
+            stok SMALLINT DEFAULT 1, 
+            yazar_id INTEGER NOT NULL, 
+            FOREIGN KEY(yazar_id) REFERENCES yazarlar(id) ON DELETE RESTRICT
+        )""",
+        
+       """CREATE TABLE IF NOT EXISTS odunc (
+            id INTEGER PRIMARY KEY AUTOINCREMENT, 
+            kitap_id INTEGER NOT NULL, 
+            okuyucu_id INTEGER NOT NULL, 
+            alis_tarihi TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
+            FOREIGN KEY(kitap_id) REFERENCES kitaplar(id), 
+            FOREIGN KEY(okuyucu_id) REFERENCES okuyucular(id)
+        )"""
     ]
+    
+    for tablo in tablolar:
+        db_calistir(tablo)
+    print("✅ Veritabanı Optimize Edildi ve RDBMS Kurallarına Uygun Başlatıldı!")
     
     for tablo in tablolar:
         db_calistir(tablo)
@@ -53,20 +79,50 @@ init_db()
 def home():
     return "<h1>📚 Kütüphane API Yayında!</h1>"
 
+
+
+
 # Yazar ekleme
+# Yazar ekleme (GÜNCELLENDİ: Tekrarı Önleyen Versiyon)
 @app.route('/yazar/ekle', methods=['POST'])
 def add_yazar():
-        ad = request.json.get('ad_soyad')        
-        if not ad: return jsonify({'error': 'Yazar adı ve soyadı gereklidir.'}), 400        
-        id = db_calistir('INSERT INTO yazarlar (ad_soyad) VALUES (?)', (ad,))
-        return jsonify({'message': 'Yazar başarıyla eklendi.', 'id ': id}), 201 
+    gelen_ad = request.json.get('ad_soyad')      
+    
+    if not gelen_ad: 
+        return jsonify({'error': 'Yazar adı ve soyadı gereklidir.'}), 400
+        
+    temiz_ad = gelen_ad.strip().title()
+
+    # 2. ADIM: KONTROL (Validation)
+    # Veritabanına soruyoruz: Bu isimde biri var mı?
+    mevcut_yazar = db_calistir('SELECT * FROM yazarlar WHERE ad_soyad = ?', (temiz_ad,))
+    
+    if mevcut_yazar:
+        # Eğer varsa, YENİ KAYIT YAPMA! Var olanın bilgisini dön.
+        return jsonify({
+            'message': 'Bu yazar zaten sistemde kayıtlı.', 
+            'id': mevcut_yazar[0]['id'],
+            'var_miydi': True 
+        }), 200 
+        
+    
+    id = db_calistir('INSERT INTO yazarlar (ad_soyad) VALUES (?)', (temiz_ad,))
+    return jsonify({
+        'message': 'Yazar başarıyla eklendi.', 
+        'id': id,
+        'var_miydi': False
+    }), 201 
+        
+        
         
 @app.route('/okuyucu/ekle', methods=['POST'])
 def add_okuyucu():
-    ad = request.get_json('ad_soyad')
+    ad = request.json.get('ad_soyad')
     if not ad: return jsonify({'error': 'Okuyucu adı zorunlu.'}), 400
     id = db_calistir('INSERT INTO okuyucular (ad_soyad) VALUES (?)', (ad,))
     return jsonify({'message': 'Okuyucu eklendi.', 'id': id}), 201
+       
+       
         
 @app.route('/kitap/ekle', methods=['POST'])
 def add_kitap():
@@ -81,16 +137,22 @@ def add_kitap():
                      (d['baslik'], d.get('stok', 1), d['yazar_id']))
     return jsonify({'message': 'Kitap başarıyla eklendi.', 'kitap_id': id}), 201
       
+  
          
 @app.route('/kitaplar', methods=['GET'])
 def kitaplari_getir():
-    sorgu = '''SELECT k.id, k.baslik, k.stok, y.ad_soyad as yazar 
+    sorgu = '''SELECT k.id, k.baslik, k.stok, k.yazar_id, y.ad_soyad as yazar 
                FROM kitaplar k JOIN yazarlar y ON k.yazar_id = y.id'''
     return  jsonify(db_calistir(sorgu)), 200
+    
+    
+    
     
 @app.route("/yazarlar", methods=['GET'])
 def yazarlar_getir():
     return jsonify(db_calistir('SELECT * FROM yazarlar')), 200
+
+
 
 @app.route('/odunc/al', methods=['POST'])
 def odunc_al():
@@ -107,6 +169,8 @@ def odunc_al():
     db_calistir('UPDATE kitaplar SET stok = stok - 1 WHERE id = ?', (d['kitap_id'],))
     return jsonify({'message': 'Kitap ödünç alındı.'}), 200
 
+
+
 @app.route('/odunc/teslim', methods=['POST'])
 def odunc_teslim(): 
     d = request.json
@@ -117,6 +181,8 @@ def odunc_teslim():
     db_calistir('UPDATE kitaplar SET stok = stok + 1 WHERE id = ?', (d['kitap_id'],))
         
     return jsonify({'message': 'Kitap teslim alındı.'}), 200
+
+
 
 @app.route('/kitap/sil/<int:id>', methods=['DELETE'])
 def kitap_sil(id):
@@ -130,6 +196,21 @@ def kitap_sil(id):
     db_calistir('DELETE FROM kitaplar WHERE id=?', (id,))
     return jsonify({'message': 'Kitap başarıyla kütüphaneden kaldırıldı'}), 200
 
+
+
+@app.route('/kitap/guncelle/<int:id>', methods=['PUT'])
+def kitap_guncelle(id):
+    veri = request.json
+    
+    yeni_baslik = veri.get('baslik')
+    yeni_yazar_id = veri.get('yazar_id')
+    yeni_stok = veri.get('stok')
+    
+    db_calistir("UPDATE kitaplar SET baslik = ?,yazar_id = ?, stok = ? WHERE id = ?", (yeni_baslik,yeni_yazar_id, yeni_stok, id))
+    return jsonify({"message": "Kitap başarıyla güncellendi"}), 200
+
+
+
 @app.route('/yazar/silme', methods=['DELETE'])
 def yazar_sil():
     id = request.json.get('yazar_id')
@@ -138,6 +219,8 @@ def yazar_sil():
     db_calistir('DELETE FROM yazarlar WHERE id=?', (id,))
     return jsonify({'message': 'Silindi'}), 200
 
+
+
 @app.route('/okuyucu/silme', methods=['DELETE'])
 def okuyucu_sil():
     id = request.json.get('okuyucu_id')
@@ -145,6 +228,28 @@ def okuyucu_sil():
         return jsonify({'error': 'Okuyucunun borcu var, silinemez!'}), 400
     db_calistir('DELETE FROM okuyucular WHERE id=?', (id,))
     return jsonify({'message': 'Silindi'}), 200
+
+# app.py içine ekle:
+@app.route("/okuyucular", methods=['GET'])
+def okuyuculari_getir():
+    return jsonify(db_calistir('SELECT * FROM okuyucular')), 200
+
+@app.route('/odunc/listesi', methods=['GET'])
+def odunc_listesi():
+    sorgu = sorgu = """
+        SELECT 
+            odunc.id as islem_id,
+            kitaplar.id as kitap_id,
+            okuyucular.id as okuyucu_id,
+            kitaplar.baslik,
+            okuyucular.ad_soyad,
+            odunc.alis_tarihi
+        FROM odunc
+        JOIN kitaplar ON odunc.kitap_id = kitaplar.id
+        JOIN okuyucular ON odunc.okuyucu_id = okuyucular.id
+    """
+    return jsonify(db_calistir(sorgu)), 200
+
 
 if __name__ == '__main__':
     app.run(port=5000, debug=True)

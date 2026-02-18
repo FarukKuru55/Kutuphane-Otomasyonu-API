@@ -45,7 +45,7 @@ export default function KitapEkle({ veriGuncelle }: { veriGuncelle: () => void }
                     </Form.Group>
 
                     <Form.Group className="mb-2">
-                        <Form.Label>Yazar ID (Şimdilik sayı gir)</Form.Label>
+                        <Form.Label>Yazar ID</Form.Label>
                         <Form.Control 
                             type="number" 
                             placeholder="Örn: 1" 
