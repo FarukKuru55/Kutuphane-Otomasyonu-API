@@ -250,6 +250,29 @@ def odunc_listesi():
     """
     return jsonify(db_calistir(sorgu)), 200
 
+@app.route('/istatistik', methods=['GET'])
+def istatistik_getir():
+    try:
+        # Eğer hiç kitap yoksa SUM(stok) None döner, o yüzden "or 0" ile güvenlik önlemi alıyoruz.
+        stok_sorgu = db_calistir('SELECT SUM(stok) as toplam FROM kitaplar')
+        toplam_fiziksel_kitap = stok_sorgu[0]['toplam'] if stok_sorgu[0]['toplam'] else 0
+        
+        kitap_sayisi = db_calistir('SELECT COUNT(*) as sayi FROM kitaplar')[0]['sayi']
+        yazar_sayisi = db_calistir('SELECT COUNT(*) as sayi FROM yazarlar')[0]['sayi']
+        okuyucu_sayisi = db_calistir('SELECT COUNT(*) as sayi FROM okuyucular')[0]['sayi']
+        odunc_sayisi = db_calistir('SELECT COUNT(*) as sayi FROM odunc')[0]['sayi']
+
+        return jsonify({
+            'toplam_kitap': kitap_sayisi,
+            'toplam_yazar': yazar_sayisi,
+            'toplam_okuyucu': okuyucu_sayisi,
+            'odunc_kitap_sayisi': odunc_sayisi
+        }), 200
+        
+        
+        
+    except Exception as e:
+       return jsonify({'error': f'İstatistik çekilemedi: {str(e)}'}), 500
 
 if __name__ == '__main__':
     app.run(port=5000, debug=True)

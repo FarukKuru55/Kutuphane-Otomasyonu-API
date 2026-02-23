@@ -139,3 +139,13 @@ export const kitapTeslimAl = async (veri: { kitap_id: number; okuyucu_id: number
         throw error;
     }
 };
+
+export const getIstatistik = async () => {
+    try {
+        const response = await axios.get(`${BASE_URL}/istatistik`);     
+        return response.data;
+    } catch (error) {   
+        console.error("İstatistik alınırken hata:", error);
+        return null;    
+    }   
+};
