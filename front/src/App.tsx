@@ -7,7 +7,7 @@ import YazarYonetimi from './components/YazarYonetimi';
 import OduncIslemleri from './components/OduncIslemleri';
 import OkuyucuYonetimi from './components/OkuyucuYonetimi';
 import TeslimIslemleri from './components/TeslimIslemleri';
-import { getIstatistik } from './services/api';
+import { getIstatistik } from './services/istatistikService';
 
 interface Istatistik {
   toplam_kitap: number;

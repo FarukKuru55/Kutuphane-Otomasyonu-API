@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Table, Badge, Button, Alert, Modal, Form } from 'react-bootstrap'; 
-// getYazarlar fonksiyonunu da import etmeyi unutma (api.ts'ye eklediysen)
-import { getKitaplar, getYazarlar, kitapSil, kitapGuncelle } from '../services/api';
+import { getKitaplar, kitapSil, kitapGuncelle } from '../services/kitapService';
+import { getYazarlar } from '../services/yazarService'; 
 
 interface Kitap {
     id: number;

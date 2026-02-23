@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Form, Button, Alert, Card } from 'react-bootstrap';
-import { addKitap, getYazarlar } from '../services/api';
+import { getYazarlar } from '../services/yazarService';
+import { addKitap } from '../services/kitapService';
 
 // Bu bileşenin alacağı parametrelerin tipini belirtiyoruz 
 interface KitapEkleProps {

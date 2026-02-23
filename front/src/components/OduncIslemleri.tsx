@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Table, Button, Badge, Modal, Form, Alert } from 'react-bootstrap';
-import { getKitaplar, getOkuycular, oduncVer } from '../services/api';
+import { getKitaplar } from '../services/kitapService';
+import { getOkuycular } from '../services/okuyucuService';
+import { oduncVer } from '../services/oduncService';
 
-// Tiplerimiz
 interface Kitap {
     id: number;
     baslik: string;

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Table, Button, Form, InputGroup, Alert, Card } from 'react-bootstrap';
-import { getYazarlar, addYazar, deleteYazar } from '../services/api';
+import { getYazarlar, addYazar, deleteYazar } from '../services/yazarService';
 
 interface Yazar {
     id: number;

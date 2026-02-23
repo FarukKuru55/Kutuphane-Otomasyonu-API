@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Table, Button, Form, InputGroup, Alert, Card } from 'react-bootstrap';
 // Yeni eklediğimiz fonksiyonları import ediyoruz
-import { getOkuycular, addOkuyucu, deleteOkuyucu } from '../services/api';
+import { getOkuycular, addOkuyucu, deleteOkuyucu } from '../services/okuyucuService';
 
 interface Okuyucu {
     id: number;

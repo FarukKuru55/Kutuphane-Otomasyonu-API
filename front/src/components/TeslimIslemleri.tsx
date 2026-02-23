@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Table, Button, Alert, Badge } from 'react-bootstrap';
-import { getOduncListesi, kitapTeslimAl } from '../services/api';
+import { getOduncListesi, kitapTeslimAl } from '../services/oduncService';
 
 interface OduncKayit {
     islem_id: number;
