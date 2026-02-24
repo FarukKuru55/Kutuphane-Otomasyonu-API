@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Form, Button, Alert, Card } from 'react-bootstrap';
 import { getYazarlar } from '../services/yazarService';
 import { addKitap } from '../services/kitapService';
+import { toast } from 'react-toastify';
 
 // Bu bileşenin alacağı parametrelerin tipini belirtiyoruz 
 interface KitapEkleProps {
@@ -16,7 +17,8 @@ export default function KitapEkle({ veriGuncelle }: KitapEkleProps) {
     
     // Yazarları tutacak kutumuz (State)
     const [yazarlar, setYazarlar] = useState<any[]>([]);
-
+    
+    
     // Sayfa (Modal) ilk açıldığında çalışacak motor (useEffect)
     useEffect(() => {
         const yazarlariGetir = async () => {
@@ -33,25 +35,32 @@ export default function KitapEkle({ veriGuncelle }: KitapEkleProps) {
         yazarlariGetir();
     }, []); // Boş [] sayesinde sadece açılışta 1 kere çalışır.
 
-    const kaydet = async (e: React.FormEvent) => {
-        e.preventDefault(); // Sayfanın yenilenmesini engelle
+   const kaydet = async (e: React.FormEvent) => {
+    e.preventDefault(); //Sayfa yenilenmesini durdurur.
+
+    try {
+        await addKitap({
+            baslik: baslik,
+            yazar_id: Number(yazarId), 
+            stok: Number(stok)
+        });
+
+        toast.success("🚀 Kitap başarıyla raflara eklendi!", {
+            theme: "colored" 
+        });
+
+ 
+        setBaslik("");
+        setYazarId("");
+        setStok("1");
+
+        veriGuncelle();
         
-        try {
-            await addKitap({
-                baslik: baslik,
-                yazar_id: Number(yazarId), 
-                stok: Number(stok)
-            });
-            setMesaj("✅ Kitap Başarıyla Eklendi!");
-            // Kutuları temizle
-            setBaslik(""); 
-            setYazarId("");
-            setStok("1");
-            veriGuncelle(); 
-        } catch (error) {
-            setMesaj("❌ Hata oluştu! Kitap eklenemedi.");
-        }
-    };
+    } catch (error) {
+        console.error("Hata:", error);
+        toast.error("❌ Bir şeyler ters gitti! Bilgileri kontrol edin.");
+    }
+};
 
     return (
         <Card className="mb-4 shadow-sm border-0">

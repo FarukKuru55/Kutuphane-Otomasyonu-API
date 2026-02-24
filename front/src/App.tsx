@@ -1,6 +1,6 @@
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { useState , useEffect  } from 'react';
-import { Container, Row, Col, Button, Modal } from 'react-bootstrap';
+import { useState, useEffect } from 'react';
+import { Container, Row, Col, Button, Modal } from 'react-bootstrap'; 
 import KitapListesi from './components/KitapListesi';
 import KitapEkle from './components/KitapEkle';
 import YazarYonetimi from './components/YazarYonetimi';
@@ -8,6 +8,8 @@ import OduncIslemleri from './components/OduncIslemleri';
 import OkuyucuYonetimi from './components/OkuyucuYonetimi';
 import TeslimIslemleri from './components/TeslimIslemleri';
 import { getIstatistik } from './services/istatistikService';
+import { ToastContainer, } from 'react-toastify'; 
+import 'react-toastify/dist/ReactToastify.css';
 
 interface Istatistik {
   toplam_kitap: number;
@@ -26,7 +28,7 @@ function App() {
   const [showTeslim, setShowTeslim] = useState(false);
   const [istatistik, setIstatistik] = useState<Istatistik | null>(null);
   
-
+  
   // Ekleme işleminden sonra sayfayı yenilemek için basit bir yöntem
   const sayfaYenile = () => {
     window.location.reload();
@@ -46,7 +48,20 @@ function App() {
   } , []); // Boş bağımlılık dizisi, sadece ilk render'da çalışır
 
   return (
+    
     <div className="bg-light vh-100 vw-100 d-flex align-items-center justify-content-center">
+      <ToastContainer 
+        position="top-right" 
+        autoClose={3500} 
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="colored"
+      />
       <Container>
         <Row className="justify-content-center">
           <Col md={10} lg={9}> {/* Kutuyu genişletme */}

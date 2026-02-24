@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Table, Button, Badge, Modal, Form, Alert } from 'react-bootstrap';
+import { Table, Button, Badge, Modal, Form } from 'react-bootstrap';
 import { getKitaplar } from '../services/kitapService';
 import { getOkuycular } from '../services/okuyucuService';
 import { oduncVer } from '../services/oduncService';
+import { toast } from 'react-toastify'; 
 
 interface Kitap {
     id: number;
@@ -20,36 +21,33 @@ export default function OduncIslemleri() {
     const [kitaplar, setKitaplar] = useState<Kitap[]>([]);
     const [okuyucular, setOkuyucular] = useState<Okuyucu[]>([]);
     
-    // Modal Durumları
     const [showModal, setShowModal] = useState(false);
     const [seciliKitap, setSeciliKitap] = useState<Kitap | null>(null);
     const [seciliOkuyucuId, setSeciliOkuyucuId] = useState<number | string>("");
 
-    const [mesaj, setMesaj] = useState<{tur: string, text: string} | null>(null);
-
-    // 1. Verileri Çek (Kitaplar ve Okuyucular)
     const verileriYukle = async () => {
-        const kData = await getKitaplar();
-        setKitaplar(kData);
-        
-        const oData = await getOkuycular();
-        setOkuyucular(oData);
+        try {
+            const kData = await getKitaplar();
+            setKitaplar(kData);
+            const oData = await getOkuycular();
+            setOkuyucular(oData);
+        } catch (error) {
+            toast.error("Veriler yüklenirken bir hata oluştu!");
+        }
     };
 
     useEffect(() => { verileriYukle(); }, []);
 
-    // 2. Butona basınca Modalı Aç
     const modalAc = (kitap: Kitap) => {
         setSeciliKitap(kitap);
-        setSeciliOkuyucuId(""); // Seçimi sıfırla
-        setMesaj(null); // Eski mesajları sil
+        setSeciliOkuyucuId(""); 
         setShowModal(true);
     };
 
-    // 3. İşlemi Tamamla (Backend'e Gönder)
+    // 2. İŞLEMİ YAP FONKSİYONU MODERNİZE EDİLDİ
     const islemiYap = async () => {
         if (!seciliKitap || !seciliOkuyucuId) {
-            setMesaj({ tur: 'warning', text: "Lütfen bir okuyucu seçin!" });
+            toast.warning("⚠️ Lütfen bir okuyucu seçin!");
             return;
         }
 
@@ -59,24 +57,27 @@ export default function OduncIslemleri() {
                 okuyucu_id: Number(seciliOkuyucuId)
             });
 
-            setMesaj({ tur: 'success', text: "✅ Kitap başarıyla ödünç verildi!" });
+            // Başarı bildirimi
+            toast.success(`✅ ${seciliKitap.baslik} başarıyla ödünç verildi!`, {
+                theme: "colored"
+            });
             
-            // Listeyi yenile ki stok düşüşünü görelim!
             await verileriYukle();
-            
-            // Kısa süre sonra modalı kapat
-            setTimeout(() => setShowModal(false), 1500);
+            setShowModal(false);  
 
         } catch (error: any) {
-            setMesaj({ tur: 'danger', text: error.response?.data?.error || "Hata oluştu!" });
+            const hataMesaji = error.response?.data?.error || "Hata oluştu!";
+            toast.error(`❌ ${hataMesaji}`, {
+                theme: "colored"
+            });
         }
     };
 
     return (
         <div className="mt-4">
-            <h3 className="mb-3">📚 Ödünç Verme İşlemleri</h3>
+            <h3 className="mb-3 fw-bold text-success">📚 Ödünç Verme İşlemleri</h3>
             
-            <Table striped bordered hover className='shadow-sm'>
+            <Table striped bordered hover responsive className='shadow-sm'>
                 <thead className="bg-success text-white">
                     <tr>
                         <th>ID</th>
@@ -88,23 +89,24 @@ export default function OduncIslemleri() {
                 </thead>
                 <tbody>
                     {kitaplar.map((k) => (
-                        <tr key={k.id}>
+                        <tr key={k.id} className="align-middle">
                             <td>{k.id}</td>
-                            <td>{k.baslik}</td>
+                            <td className="fw-bold">{k.baslik}</td>
                             <td>{k.yazar}</td>
                             <td>
-                                <Badge bg={k.stok > 0 ? "primary" : "secondary"}>
+                                <Badge bg={k.stok > 0 ? "primary" : "secondary"} className="px-3 py-2">
                                     {k.stok} Adet
                                 </Badge>
                             </td>
                             <td>
                                 <Button 
                                     size="sm" 
-                                    variant={k.stok > 0 ? "outline-success" : "secondary"}
-                                    disabled={k.stok === 0} // Stok yoksa tıklanamasın
+                                    variant={k.stok > 0 ? "success" : "secondary"}
+                                    disabled={k.stok === 0}
                                     onClick={() => modalAc(k)}
+                                    className="fw-bold"
                                 >
-                                    {k.stok > 0 ? "Ödünç Ver" : "Stok Yok"}
+                                    {k.stok > 0 ? "🤝 Ödünç Ver" : "Stok Yok"}
                                 </Button>
                             </td>
                         </tr>
@@ -112,20 +114,18 @@ export default function OduncIslemleri() {
                 </tbody>
             </Table>
 
-            {/* ÖDÜNÇ VERME MODALI */}
             <Modal show={showModal} onHide={() => setShowModal(false)} centered>
-                <Modal.Header closeButton>
-                    <Modal.Title>📖 {seciliKitap?.baslik} - Ödünç Ver</Modal.Title>
+                <Modal.Header closeButton className="bg-light">
+                    <Modal.Title>📖 {seciliKitap?.baslik}</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
-                    {mesaj && <Alert variant={mesaj.tur}>{mesaj.text}</Alert>}
-                    
                     <Form>
                         <Form.Group>
-                            <Form.Label>Kitabı Kime Veriyoruz?</Form.Label>
+                            <Form.Label className="fw-bold small text-secondary">Kitabı Kime Veriyoruz?</Form.Label>
                             <Form.Select 
                                 value={seciliOkuyucuId}
                                 onChange={(e) => setSeciliOkuyucuId(e.target.value)}
+                                className="rounded-3"
                             >
                                 <option value="">Okuyucu Seçiniz...</option>
                                 {okuyucular.map(okuyucu => (
@@ -135,16 +135,16 @@ export default function OduncIslemleri() {
                                 ))}
                             </Form.Select>
                             {okuyucular.length === 0 && (
-                                <Form.Text className="text-danger">
-                                    * Listede kimse yok. Önce Okuyucu eklemelisin!
+                                <Form.Text className="text-danger fw-bold">
+                                    * Önce Okuyucu eklemelisin!
                                 </Form.Text>
                             )}
                         </Form.Group>
                     </Form>
                 </Modal.Body>
-                <Modal.Footer>
+                <Modal.Footer className="bg-light">
                     <Button variant="secondary" onClick={() => setShowModal(false)}>İptal</Button>
-                    <Button variant="success" onClick={islemiYap} disabled={!seciliOkuyucuId}>
+                    <Button variant="success" onClick={islemiYap} disabled={!seciliOkuyucuId} className="fw-bold px-4">
                         Onayla ve Ver
                     </Button>
                 </Modal.Footer>
